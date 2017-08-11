@@ -1,4 +1,5 @@
 import tornado.ioloop
+import tornado.web
 from tornado import gen
 import tornado.web
 from sdp import SDP
@@ -12,8 +13,18 @@ class App(SDP):
     def sub_cars_of_color(self, color):
         return r.table('cars').filter({'color': color})
 
+class MainHandler(tornado.web.RequestHandler):
+    def get(self):
+        self.render("index.html")
+
+class NoCacheStaticFileHandler(tornado.web.StaticFileHandler):
+    def set_extra_headers(self, path):
+        self.set_header("Cache-control", "no-cache")
+
 def make_app():
     return tornado.web.Application([
+        (r'/', MainHandler),
+        (r'/dest/(.*)', NoCacheStaticFileHandler, {'path': './dest'}),
         (r"/ws", App),
     ])
 
