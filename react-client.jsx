@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { observable } from 'mobx';
 import Observer from 'mobx-react';
-
+import _ from 'underscore';
 
 let id = 0;
 
@@ -15,14 +15,18 @@ class ObservableMsgStore {
 }
 
 ws.onopen = function open() {
-
+    ReactDOM.render(
+        <App />,
+        document.getElementById('container')
+    );
 };
 
 ws.onmessage = function incoming(data) {
   console.log('->', data.data);
-  const callback = callbacks[data.data.id];
+  data = JSON.parse(data.data);
+  const callback = callbacks[data.id];
   if(callback) {
-      callback(data.data);
+      callback(data);
   }
 };
 
@@ -31,18 +35,20 @@ ws.onmessage = function incoming(data) {
 class Item extends React.Component{
     constructor(){
         super();
+        this.handleClick = this.handleClick.bind(this);
     }
 
     handleClick(){
         const to_color = this.props.color === 'red'? 'blue': 'red';
         id += 1;
-        let data = {msg: 'method', name: 'change_color', id: id, params: {color: to_color}};
+        let data = {msg: 'method', method: 'change_color', id: id,
+            params: {id: this.props.msg.id, color: to_color}};
         data = JSON.stringify(data);
         ws.send(data);
     }
 
     render() {
-        return <div>{this.props.msg}<a onClick={()=>handleClick()}>change color</a></div>;
+        return <div>{this.props.msg.matricula}<a href="#" onClick={this.handleClick}>change color</a></div>;
     }
 }
 
@@ -51,18 +57,25 @@ class List extends React.Component{
     constructor() {
         super();
         this.store = new ObservableMsgStore();
+        this.handle = this.handle.bind(this);
     }
 
     handle(msg){
+        console.log('handle', msg);
         if(msg.msg === 'added'){
+            console.log(this.store.msgs.slice());
+            this.store.msgs.push(msg.doc);
+            console.log(this.store.msgs.slice());
+        }else if(msg.msg === 'changed'){
+            let tmp = this.store.msgs.slice();
+            let index = _.findIndex(tmp, (x, i)=>x.id === msg.doc.id);
+            this.store.msgs.splice(index, 1)
             this.store.msgs.push(msg.doc)
         }else{
             let tmp = this.store.msgs.slice();
-            let index = _.find(tmp, (x, i)=>x.id === msg.doc.id);
+            let index = _.findIndex(tmp, (x, i)=>x.id === msg.doc_id);
+            console.log('index:', index);
             this.store.msgs.splice(index, 1)
-            if(msg.msg === 'updated'){
-                this.store.msgs.push(msg.doc)
-            }
         }
     }
 
@@ -103,13 +116,16 @@ class App extends React.Component{
         return (
             <div>
                 <RedList/>
+                <hr />
                 <BlueList/>
             </div>
         );
     }
 }
 
+/*
 ReactDOM.render(
     <App />,
     document.getElementById('container')
 );
+*/

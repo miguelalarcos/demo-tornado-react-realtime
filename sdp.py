@@ -23,19 +23,19 @@ class SDP(tornado.websocket.WebSocketHandler):
         sessions[self.session] = self
         self.registered_feeds = {}
         self.pending_unsubs = []
-        self.queue = Queue()
+        self.queue = Queue(maxsize=10)
         tornado.ioloop.IOLoop.current().spawn_callback(self.consumer)
 
     @gen.coroutine
     def feed(self, sub_id, query):
         conn = yield self.conn
-        feed = yield query.changes().run(conn) # send initials
+        feed = yield query.changes(include_initial=True).run(conn) # send initials
         self.registered_feeds[sub_id] = feed
         while (yield feed.fetch_next()):
             item = yield feed.next()
-            if item['old_val'] is None:
+            if item.get('old_val') is None:
                 self.send_added(sub_id, item['new_val'])
-            elif item['new_val'] is None:
+            elif item.get('new_val') is None:
                 self.send_removed(sub_id, item['old_val']['id'])
             else:
                 self.send_changed(sub_id, item['new_val'])
@@ -75,9 +75,11 @@ class SDP(tornado.websocket.WebSocketHandler):
         pass
 
     def on_message(self, msg):
+        print('->', msg)
         @gen.coroutine
         def helper(msg):
-            self.queue.put(msg)
+            print('=>put', self.queue.qsize())
+            yield self.queue.put(msg)
         tornado.ioloop.IOLoop.current().spawn_callback(helper, msg)
 
     # consumer can be recoded as:
@@ -85,7 +87,9 @@ class SDP(tornado.websocket.WebSocketHandler):
     @gen.coroutine
     def consumer(self):
         while True:
+            print('waiting queue.get()')
             msg = yield self.queue.get()
+            print('*', msg)
             if msg == 'stop':
                 return
             data = ejson.loads(msg)
@@ -105,7 +109,8 @@ class SDP(tornado.websocket.WebSocketHandler):
                 prefixed = 'sub_' + data['name']
                 try:
                     query = getattr(self, prefixed)(**data['params'])
-                    yield self.feed(data['id'], query)
+                    #yield self.feed(data['id'], query)
+                    tornado.ioloop.IOLoop.current().spawn_callback(self.feed, data['id'], query)
                 except AttributeError:
                     self.send_nosub(data['id'], 'sub does not exist')
             elif message == 'unsub':
@@ -113,7 +118,10 @@ class SDP(tornado.websocket.WebSocketHandler):
                 feed = self.registered_feeds[id]
                 feed.close()
                 del self.registered_feeds[id]
+
+            print('antes de task done y waiting')
             self.queue.task_done()
+
 
 
     def on_close(self):

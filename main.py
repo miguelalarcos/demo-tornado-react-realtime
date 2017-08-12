@@ -13,7 +13,8 @@ class App(SDP):
         return a + b
 
     @gen.coroutine
-    def change_color(self, id, color):
+    def method_change_color(self, id, color):
+        print(id, color)
         yield self.update('cars', id, {'color': color})
 
     def sub_cars_of_color(self, color):
