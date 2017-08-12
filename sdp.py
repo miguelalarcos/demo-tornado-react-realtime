@@ -127,14 +127,27 @@ class SDP(tornado.websocket.WebSocketHandler):
         tornado.ioloop.IOLoop.current().spawn_callback(helper)
 
     @gen.coroutine
-    def method_insert(self, id, collection, doc):
+    def insert(self, collection, doc):
         self.before_insert(collection, doc)
         conn = yield self.conn
         result = yield r.table(collection).insert(doc).run(conn)
-        self.after_insert()
+        self.after_insert(result)
 
     def before_insert(self, collection, doc):
         pass
 
-    def after_insert(self):
+    def after_insert(self, result):
+        pass
+
+    @gen.coroutine
+    def update(self, collection, id, subdoc):
+        self.before_update(collection, subdoc)
+        conn = yield self.conn
+        result = yield r.table(collection).get(id).update(subdoc).run(conn)
+        self.after_update()
+
+    def before_update(self, collection, subdoc):
+        pass
+
+    def after_update(self):
         pass
