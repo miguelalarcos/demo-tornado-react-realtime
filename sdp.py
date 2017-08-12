@@ -117,7 +117,7 @@ class SDP(tornado.websocket.WebSocketHandler):
 
 
     def on_close(self):
-        for feed in self.registered_feeds:
+        for feed in self.registered_feeds.values():
             feed.close()
         del sessions[self.session]
 
