@@ -78,7 +78,6 @@ class SDP(tornado.websocket.WebSocketHandler):
         print('->', msg)
         @gen.coroutine
         def helper(msg):
-            print('=>put', self.queue.qsize())
             yield self.queue.put(msg)
         tornado.ioloop.IOLoop.current().spawn_callback(helper, msg)
 
@@ -87,9 +86,7 @@ class SDP(tornado.websocket.WebSocketHandler):
     @gen.coroutine
     def consumer(self):
         while True:
-            print('waiting queue.get()')
             msg = yield self.queue.get()
-            print('*', msg)
             if msg == 'stop':
                 return
             data = ejson.loads(msg)
@@ -119,7 +116,6 @@ class SDP(tornado.websocket.WebSocketHandler):
                 feed.close()
                 del self.registered_feeds[id]
 
-            print('antes de task done y waiting')
             self.queue.task_done()
 
 
