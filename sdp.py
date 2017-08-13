@@ -14,6 +14,21 @@ r.set_loop_type("tornado")
 #https://www.rethinkdb.com/docs/async-connections/
 sessions = {}
 
+methods = []
+
+
+def method(f):
+    methods.append(f.__name__)
+    return gen.coroutine(f)
+
+subs = []
+
+
+def sub(f):
+    subs.append(f.__name__)
+    return f
+
+
 class SDP(tornado.websocket.WebSocketHandler):
 
     def __init__(self, application, request):
@@ -84,7 +99,7 @@ class SDP(tornado.websocket.WebSocketHandler):
     # consumer can be recoded as:
     # http: // www.tornadoweb.org / en / stable / queues.html?highlight = queue
     @gen.coroutine
-    def consumer(self):
+    def consumer(self): # all data gets must go inside a try
         while True:
             msg = yield self.queue.get()
             if msg == 'stop':
@@ -93,23 +108,24 @@ class SDP(tornado.websocket.WebSocketHandler):
             message = data['msg']
 
             if message == 'method':
-                prefixed = 'method_' + data['method']
-                try:
-                    method = getattr(self, prefixed)
-                except AttributeError:
+                if data['method'] not in methods:
                     self.send_nomethod(data['id'], 'method does not exist')
-                    return
-
-                result = yield method(**data['params'])
-                self.send_result(data['id'], result)
+                else:
+                    method = getattr(self, data['method'])
+                    result = yield method(**data['params'])
+                    self.send_result(data['id'], result)
             elif message == 'sub':
-                prefixed = 'sub_' + data['name']
-                try:
-                    query = getattr(self, prefixed)(**data['params'])
-                    #yield self.feed(data['id'], query)
-                    tornado.ioloop.IOLoop.current().spawn_callback(self.feed, data['id'], query)
-                except AttributeError:
+                if data['name'] not in subs:
                     self.send_nosub(data['id'], 'sub does not exist')
+                else:
+                    query = getattr(self, data['name'])(**data['params'])
+                    tornado.ioloop.IOLoop.current().spawn_callback(self.feed, data['id'], query)
+                #prefixed = 'sub_' + data['name']
+                #try:
+                #    query = getattr(self, prefixed)(**data['params'])
+                #    tornado.ioloop.IOLoop.current().spawn_callback(self.feed, data['id'], query)
+                #except AttributeError:
+                #    self.send_nosub(data['id'], 'sub does not exist')
             elif message == 'unsub':
                 id = data['id']
                 feed = self.registered_feeds[id]
