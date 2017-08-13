@@ -5,7 +5,7 @@ pip install -r requirements.txt
 
 rollup -c
 
-rethinkdb
+rethinkdb (visit the admin page and create a collection 'cars' and a document {matricula: '123', color: 'red'})
 
 python main.py
 
