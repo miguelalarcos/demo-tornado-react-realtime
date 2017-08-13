@@ -1,7 +1,6 @@
 import tornado.ioloop
 import tornado.web
 from tornado import gen
-import tornado.web
 from sdp import SDP
 import rethinkdb as r
 
@@ -14,8 +13,11 @@ class App(SDP):
 
     @gen.coroutine
     def method_change_color(self, id, color):
-        #print(id, color)
         yield self.update('cars', id, {'color': color})
+
+    @gen.coroutine
+    def method_create_red_car(self, matricula):
+        yield self.insert('cars', {'matricula': matricula, 'color': 'red'})
 
     def sub_cars_of_color(self, color):
         return r.table('cars').filter({'color': color})
