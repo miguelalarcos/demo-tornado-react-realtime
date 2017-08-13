@@ -80,11 +80,14 @@ export const start = (App) => {
 }
 
 class ClassRPC{
-    call(sub, params){
+    call(sub, params, callback){
         id += 1;
         let data = {msg: 'method', method: sub, id: id, params: params};
         data = JSON.stringify(data);
         ws.send(data);
+        if(callback) {
+            callbacks[id] = callback;
+        }
     }
 }
 

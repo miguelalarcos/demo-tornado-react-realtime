@@ -1,6 +1,5 @@
 import tornado.ioloop
 import tornado.web
-from tornado import gen
 from sdp import SDP, method, sub
 import rethinkdb as r
 
