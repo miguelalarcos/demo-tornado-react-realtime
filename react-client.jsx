@@ -44,7 +44,7 @@ class App extends React.Component{
         this.matricula.set(matricula);
     }
 
-    changeMatricula(){
+    create(){
         RPC.call('create_red_car', {matricula: this.matricula.get()});
         this.matricula.set('');
     }
@@ -54,7 +54,7 @@ class App extends React.Component{
             <div>
                 <div>
                     <input type="text" value={this.matricula.get()} onChange={(evt)=>this.changeTextMatricula(evt.target.value)}/>
-                    <button onClick={()=>this.changeMatricula()}>create red car</button>
+                    <button onClick={()=>this.create()}>create red car</button>
                 </div>
                 <div>Red cars</div>
                 <Cars color={'red'} />
