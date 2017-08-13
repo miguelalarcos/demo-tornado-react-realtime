@@ -25,6 +25,7 @@ export class SubsComponent extends React.Component{
         super();
         this.store = observable([]);
         this.handle = this.handle.bind(this);
+        this.sub_id = null;
     }
 
     handle(msg){
@@ -47,11 +48,25 @@ export class SubsComponent extends React.Component{
     }
 
     sub(sub, params){
+        if(this.sub_id !== null){
+            let data = {msg: 'unsub', id: this.sub_id};
+            data = JSON.stringify(data);
+            ws.send(data);
+        }
         id += 1;
         let data = {msg: 'sub', name: sub, id: id, params: params};
         data = JSON.stringify(data);
         ws.send(data);
         callbacks[id] = this.handle;
+        this.sub_id = id;
+    }
+
+    componentWillUnmount(){
+        if(this.sub_id !== null){
+            let data = {msg: 'unsub', id: this.sub_id};
+            data = JSON.stringify(data);
+            ws.send(data);
+        }
     }
 }
 

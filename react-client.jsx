@@ -41,12 +41,12 @@ class App extends React.Component{
     }
 
     changeTextMatricula(matricula){
-        console.log('matricula:', matricula);
         this.matricula.set(matricula);
     }
 
     changeMatricula(){
         RPC.call('create_red_car', {matricula: this.matricula.get()});
+        this.matricula.set('');
     }
 
     render(){
