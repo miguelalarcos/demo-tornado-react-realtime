@@ -25,6 +25,7 @@ class Cars extends SubsComponent{
     constructor(props){
         super();
         this.sub('cars_of_color', {color: props.color});
+        this.sort_keys = [['matricula', 'asc'],];
     }
 
     render(){
