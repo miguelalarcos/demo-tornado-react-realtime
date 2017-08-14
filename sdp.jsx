@@ -49,9 +49,7 @@ export class SubsComponent extends React.Component{
 
     sub(sub, params){
         if(this.sub_id !== null){
-            let data = {msg: 'unsub', id: this.sub_id};
-            data = JSON.stringify(data);
-            ws.send(data);
+            this.clear();
         }
         id += 1;
         let data = {msg: 'sub', name: sub, id: id, params: params};
@@ -61,11 +59,16 @@ export class SubsComponent extends React.Component{
         this.sub_id = id;
     }
 
+    clear(){
+        this.store.splice(0, this.store.length);
+        let data = {msg: 'unsub', id: this.sub_id};
+        data = JSON.stringify(data);
+        ws.send(data);
+    }
+
     componentWillUnmount(){
         if(this.sub_id !== null){
-            let data = {msg: 'unsub', id: this.sub_id};
-            data = JSON.stringify(data);
-            ws.send(data);
+            this.clear();
         }
     }
 }
