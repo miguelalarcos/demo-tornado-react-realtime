@@ -15,7 +15,11 @@ ws.onmessage = function incoming(data) {
     data = JSON.parse(data.data);
     const callback = callbacks[data.id];
     if(callback) {
-        callback(data);
+        if(data.msg === 'method'){
+            callback(data.result);
+        }else {
+            callback(data);
+        }
     }
 };
 
@@ -29,11 +33,8 @@ export class SubsComponent extends React.Component{
     }
 
     handle(msg){
-        console.log('handle', msg);
         if(msg.msg === 'added'){
-            console.log(this.store.slice());
             this.store.push(msg.doc);
-            console.log(this.store.slice());
         }else if(msg.msg === 'changed'){
             let tmp = this.store.slice();
             let index = _.findIndex(tmp, (x, i)=>x.id === msg.doc.id);
@@ -42,7 +43,6 @@ export class SubsComponent extends React.Component{
         }else{
             let tmp = this.store.slice();
             let index = _.findIndex(tmp, (x, i)=>x.id === msg.doc_id);
-            console.log('index:', index);
             this.store.splice(index, 1)
         }
     }
