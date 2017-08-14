@@ -64,6 +64,7 @@ export class SubsComponent extends React.Component{
         let data = {msg: 'unsub', id: this.sub_id};
         data = JSON.stringify(data);
         ws.send(data);
+        delete callbacks[this.sub_id];
     }
 
     componentWillUnmount(){
