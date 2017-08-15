@@ -34,14 +34,14 @@ export class SubsComponent extends React.Component{
 
     handle(msg){
         if(msg.msg === 'added'){
-            //this.store.push(msg.doc);
             let index = this.sort_index(msg.doc);
             this.store.splice(index, 0, msg.doc);
         }else if(msg.msg === 'changed'){
             let tmp = this.store.slice();
             let index = _.findIndex(tmp, (x, i)=>x.id === msg.doc.id);
-            this.store.splice(index, 1)
-            this.store.push(msg.doc)
+            this.store.splice(index, 1);
+            index = this.sort_index(msg.doc);
+            this.store.splice(index, 0, msg.doc);
         }else{
             let tmp = this.store.slice();
             let index = _.findIndex(tmp, (x, i)=>x.id === msg.doc_id);
@@ -70,15 +70,10 @@ export class SubsComponent extends React.Component{
         while(sort_keys.length !== 0){
             let [k, t] = sort_keys.shift();
             if(x[k] >= new_val[k]){
-                ret = -1;
-                break;
+                return t === 'asc' ? -1: 1;
             }else if(x[k] <= new_val[k]){
-                ret = 1;
-                break;
+                return t === 'asc' ? 1: -1;
             }
-        }
-        if(t === 'desc'){
-            ret = -ret;
         }
         return ret;
     }
